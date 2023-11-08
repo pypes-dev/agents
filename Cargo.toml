@@ -1,0 +1,16 @@
+[package]
+name = "agents"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version="4.4.7", features = ["derive"] }
+daemonize = "0.5.0"
+directories = "5.0.1"
+libc = "0.2.149"
+pickledb = "0.5.1"
+serde = { version = "1.0.191", features = ["derive"] }
+serde_json = "1.0.108"
+tokio = {version = "1.33.0", features = ["full"] }
