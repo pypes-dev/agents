@@ -4,6 +4,7 @@
 // Autonomous in the sense they should maintain a space of possible actions and weigh decisions on which action to take
 mod agent;
 use clap::{Args, CommandFactory, Parser, Subcommand, ValueEnum};
+use pickledb::PickleDb;
 mod daemon;
 mod db;
 mod server;
@@ -70,26 +71,53 @@ async fn main() {
     if let Some(target) = &cli.optional_target_agent {
         println!("CLI.OTHER");
         if target.len() == 1 {
+            println!("TARGET LN 1");
             app.print_long_help().unwrap();
             return;
         }
         for o in target.iter() {
             println!("o {} ", o);
         }
-
-        return;
     }
     let mut db = db::initialize_db().unwrap();
-    match &cli.command {
-        Some(Commands::Start { port }) => {
+
+    match (&cli.optional_target_agent, &cli.command) {
+        (Some(target_agent), Some(command)) => {
+            handle_agent_target(&target_agent[0], command, &mut db);
+        }
+        (None, Some(command)) => {
+            handle_command(command, db);
+        }
+        _ => {
+            println!("FUCKKKK");
+            app.print_help().expect("Failed to print help");
+            println!(); // Print a newline after the help message   },
+        }
+    }
+}
+
+fn handle_agent_target(target_agent: &str, command: &Commands, db: &mut PickleDb) {
+    match command {
+        Commands::Start { port } => {
+            println!("Starting agent {}", target_agent);
+        }
+        _ => {
+            println!("TODO EACH AGENT COMMAND");
+        }
+    }
+}
+
+fn handle_command(command: &Commands, mut db: PickleDb) {
+    match command {
+        Commands::Start { port } => {
             let address = format!("{}:{}", "localhost", port);
             server::start_server(address);
         }
-        Some(Commands::Stop) => daemon::kill_daemon(),
-        Some(Commands::Add(add_args)) => {
+        Commands::Stop => daemon::kill_daemon(),
+        Commands::Add(add_args) => {
             agent::util::add_agent(&add_args.name, &mut db);
         }
-        Some(Commands::Rm(rm_args)) => match rm_args.entity {
+        Commands::Rm(rm_args) => match rm_args.entity {
             RmEntity::Agent => {
                 let name = rm_args
                     .name
@@ -101,10 +129,6 @@ async fn main() {
                 db::remove_db(db);
             }
         },
-        Some(Commands::Ls) => agent::util::ls_agents(&db),
-        None => {
-            app.print_help().expect("Failed to print help");
-            println!(); // Print a newline after the help message   },
-        }
+        Commands::Ls => agent::util::ls_agents(&db),
     }
 }
