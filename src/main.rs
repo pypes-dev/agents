@@ -62,14 +62,13 @@ enum RmEntity {
     Db,
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     let cli = Cli::parse();
     let mut db = db::initialize_db().unwrap();
 
     match &cli.command {
         Commands::Start { port, attatch } => {
-            server::start_server(port, attatch, &mut db);
+            server::start_server(port, attatch, db);
         }
         Commands::Stop => daemon::kill_daemon(),
         Commands::Status => server::status(&mut db),
