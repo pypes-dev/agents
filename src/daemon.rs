@@ -52,8 +52,8 @@ pub fn initialize_daemon() {
 
     match daemonize.start() {
         Ok(_) => println!("Success, daemonized"),
-        Err(_e) => {
-            //println!("error starting daemon {}", e);
+        Err(e) => {
+            println!("error starting daemon {}", e);
             //TODO: ignore for now since this occurs when is called and
             //server is already running; handled in bind err but should probably
             //make a better conditional and err msg so this is not expected
