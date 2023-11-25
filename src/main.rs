@@ -3,7 +3,7 @@
 // Perceptive in the sense they should be able to be always running and having inputs "streaming" into their "process"
 // Autonomous in the sense they should maintain a space of possible actions and weigh decisions on which action to take
 mod agent;
-use clap::{Args, CommandFactory, Parser, Subcommand, ValueEnum};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 mod daemon;
 mod db;
 mod server;
@@ -16,29 +16,28 @@ mod server;
 )]
 struct Cli {
     #[command(subcommand)]
-    command: Option<Commands>,
-
-    optional_target_agent: Option<Vec<String>>,
+    command: Commands,
 }
 
 #[derive(Subcommand)]
 enum Commands {
-    #[clap(about = "\nStarts the server with no target  \nStarts an agent if a target is passed")]
+    #[clap(about = "Starts the agents server")]
     Start {
         #[arg(short, long, default_value_t = String::from("7979"))]
         port: String,
+
+        #[arg(short, long, default_value_t = false)]
+        attatch: bool,
     },
-    #[clap(about = "\nStops the server with no target  \nStops an agent if a target is passed")]
+    #[clap(about = "Stops the agents server\n")]
     Stop,
-    #[clap(
-        about = "\nAdds an agent with a name  \nAdd inputs or action to an agent if a target is passed"
-    )]
+    #[clap(about = "Get the running status of the server\n")]
+    Status,
+    #[clap(about = "Adds an agent with a name\n")]
     Add(AddArgs),
-    #[clap(
-        about = "\nRemoves an agent with a name  \nRemoves inputs or action to an agent if a target is passed"
-    )]
+    #[clap(about = "Removes an agent with a name or removes the db\n")]
     Rm(RmArgs),
-    #[clap(about = "\nLists agents  \nLists an agents inputs and actions if a target is passed")]
+    #[clap(about = "Lists agents")]
     Ls,
 }
 
@@ -65,31 +64,19 @@ enum RmEntity {
 
 #[tokio::main]
 async fn main() {
-    let mut app = Cli::command();
     let cli = Cli::parse();
-    if let Some(target) = &cli.optional_target_agent {
-        println!("CLI.OTHER");
-        if target.len() == 1 {
-            app.print_long_help().unwrap();
-            return;
-        }
-        for o in target.iter() {
-            println!("o {} ", o);
-        }
-
-        return;
-    }
     let mut db = db::initialize_db().unwrap();
+
     match &cli.command {
-        Some(Commands::Start { port }) => {
-            let address = format!("{}:{}", "localhost", port);
-            server::start_server(address);
+        Commands::Start { port, attatch } => {
+            server::start_server(port, attatch, &mut db);
         }
-        Some(Commands::Stop) => daemon::kill_daemon(),
-        Some(Commands::Add(add_args)) => {
+        Commands::Stop => daemon::kill_daemon(),
+        Commands::Status => server::status(&mut db),
+        Commands::Add(add_args) => {
             agent::util::add_agent(&add_args.name, &mut db);
         }
-        Some(Commands::Rm(rm_args)) => match rm_args.entity {
+        Commands::Rm(rm_args) => match rm_args.entity {
             RmEntity::Agent => {
                 let name = rm_args
                     .name
@@ -101,10 +88,6 @@ async fn main() {
                 db::remove_db(db);
             }
         },
-        Some(Commands::Ls) => agent::util::ls_agents(&db),
-        None => {
-            app.print_help().expect("Failed to print help");
-            println!(); // Print a newline after the help message   },
-        }
+        Commands::Ls => agent::util::ls_agents(&db),
     }
 }
