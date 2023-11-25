@@ -1,15 +1,19 @@
+use pickledb::PickleDb;
+
 use crate::daemon;
 use std::{
     io::{prelude::*, BufReader, ErrorKind},
     net::{TcpListener, TcpStream},
 };
 
-pub fn start_server(address: String) {
-    println!("🤖Agents server attempting to listen at {}", address);
+pub fn start_server(port: &String, db: &mut PickleDb) {
+    db.set("port", port).unwrap();
+    let address = format!("{}:{}", "localhost", port);
 
     daemon::initialize_daemon();
     match TcpListener::bind(&address) {
         Ok(listener) => {
+            println!("🤖Agents server attempting to listen at {}", address);
             for stream in listener.incoming() {
                 match stream {
                     Ok(stream) => handle_connection(stream),
@@ -18,12 +22,31 @@ pub fn start_server(address: String) {
             }
         }
         Err(e) => {
+            println!("Failed to bind to the address: {}", e);
+
             if e.kind() == ErrorKind::AddrInUse {
                 eprintln!("🤖Agents is already running silly :p.");
                 return;
             } else {
                 eprintln!("Failed to bind to the address: {}", e);
                 return;
+            }
+        }
+    }
+}
+
+pub fn status(db: &mut PickleDb) {
+    let port = db.get::<String>("port").unwrap();
+    let address = format!("{}:{}", "localhost", port);
+    match TcpStream::connect(address.clone()) {
+        Ok(_) => {
+            println!("Server is running at {}", address);
+        }
+        Err(e) => {
+            if e.kind() == ErrorKind::ConnectionRefused {
+                println!("Server is not running.");
+            } else {
+                eprintln!("Failed to check server status: {}", e);
             }
         }
     }
