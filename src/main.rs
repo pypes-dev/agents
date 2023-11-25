@@ -25,6 +25,9 @@ enum Commands {
     Start {
         #[arg(short, long, default_value_t = String::from("7979"))]
         port: String,
+
+        #[arg(short, long, default_value_t = false)]
+        attatch: bool,
     },
     #[clap(about = "Stops the agents server\n")]
     Stop,
@@ -32,7 +35,7 @@ enum Commands {
     Status,
     #[clap(about = "Adds an agent with a name\n")]
     Add(AddArgs),
-    #[clap(about = "Removes an agent with a name\n")]
+    #[clap(about = "Removes an agent with a name or removes the db\n")]
     Rm(RmArgs),
     #[clap(about = "Lists agents")]
     Ls,
@@ -65,8 +68,8 @@ async fn main() {
     let mut db = db::initialize_db().unwrap();
 
     match &cli.command {
-        Commands::Start { port } => {
-            server::start_server(port, &mut db);
+        Commands::Start { port, attatch } => {
+            server::start_server(port, attatch, &mut db);
         }
         Commands::Stop => daemon::kill_daemon(),
         Commands::Status => server::status(&mut db),
