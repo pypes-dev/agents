@@ -4,6 +4,7 @@
 // Autonomous in the sense they should maintain a space of possible actions and weigh decisions on which action to take
 mod agent;
 use clap::{Args, Parser, Subcommand, ValueEnum};
+use pickledb::PickleDb;
 mod daemon;
 mod db;
 mod server;
@@ -39,7 +40,7 @@ enum Commands {
 
 #[derive(Parser)]
 struct AgentCommandArgs {
-    #[arg(help = "the name of the agent")]
+    #[arg(help = "Specifies the name of the agent to interact with.")]
     agent_name: String,
 
     #[command(subcommand)]
@@ -48,31 +49,47 @@ struct AgentCommandArgs {
 
 #[derive(Subcommand)]
 enum AgentCommands {
-    #[clap(about = "add an input or an action")]
-    Add,
+    #[clap(about = "Adds an input or an action to the specified agent.")]
+    Add {
+        #[arg(help = "Specifies the input or action to be added to the agent.")]
+        input: String,
+    },
 }
 
 #[derive(Args)]
 struct StartArgs {
-    #[arg(short, long, default_value_t = String::from("7979"))]
+    #[arg(
+        short,
+        long,
+        default_value_t = String::from("7979"),
+        help = "Sets the port number for the server to listen on. Defaults to 7979.",
+    )]
     port: String,
 
-    #[arg(short, long, default_value_t = false)]
+    #[arg(
+        short,
+        long,
+        default_value_t = false,
+        help = "Determines whether to attach the server to the current terminal session."
+    )]
     attatch: bool,
 }
 
 #[derive(Args)]
 struct AddArgs {
-    #[arg()]
+    #[arg(help = "Specifies the name of the agent to be added.")]
     name: String,
 }
 
 #[derive(Args)]
 struct RmArgs {
-    #[arg(value_enum)]
+    #[arg(
+        value_enum,
+        help = "Specifies whether to remove an agent or the entire database."
+    )]
     entity: RmEntity,
 
-    #[arg()]
+    #[arg(help = "The name of the agent to remove, if the target is an agent.")]
     name: Option<String>,
 }
 
@@ -108,6 +125,24 @@ fn main() {
             }
         },
         Commands::Ls => agent::util::ls_agents(&db),
-        Commands::Agent(agent_args) => println!("CALLED AGENTS"),
+        Commands::Agent(agent_args) => handle_agent_command(agent_args, &mut db),
+    }
+}
+
+fn handle_agent_command(agent_args: &AgentCommandArgs, db: &mut PickleDb) {
+    match &agent_args.command {
+        AgentCommands::Add { input } => {
+            let agent = match agent::util::get_agent(&agent_args.agent_name, db) {
+                Some(agent) => agent,
+                None => {
+                    println!("Agent not found: {}", agent_args.agent_name);
+                    return;
+                }
+            };
+            match agent.add_input(input) {
+                Some(_value) => println!("Added value from input {}", input),
+                None => return,
+            }
+        }
     }
 }
