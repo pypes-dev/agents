@@ -1,0 +1,30 @@
+<br>
+
+### ![The Pypes Agent Project](documentation/readme-assets/banner.png)
+
+<br>
+
+<br>
+
+<img src="documentation/readme-assets/ProductivityTools.png" alt="The ai agent platform for everyone" />
+
+<br>
+
+The Pypes Project is a fast and lightweight, feature packed, and user friendly tool that lets you do more by creating autonomous AI agents.
+
+Save time and effort easier and more powerfully than ever before.
+
+Don't just take my word for it!
+
+<br>
+
+<img src="documentation/readme-assets/Features.png" alt="Just let the features speak for themselves." height=35px>
+
+- Give your agents perception, stream anything into it as long as it's JSON.
+- Infinite numbers of agents with unlimited actions **and** history each.
+- Seriously kickASS performance 🥾🤯 because rust masterrace.
+- Seamless integration with your [existing tools and applications](https://github.com/jaredzwick/agents/wiki/Integrations).
+- A superbly scriptable API to automate your workflows in a cinch, 
+- Gorgeous <img src="documentation/readme-assets/eyecandy.svg" height="16px" alt="eye candy"/> and ear candy for your viewing and listening pleasure,
+- Documentation you'll actually want to read <sub>(all in this readme)</sub>
+- And oodles more!
