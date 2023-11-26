@@ -132,7 +132,7 @@ fn main() {
 fn handle_agent_command(agent_args: &AgentCommandArgs, db: &mut PickleDb) {
     match &agent_args.command {
         AgentCommands::Add { input } => {
-            let agent = match agent::util::get_agent(&agent_args.agent_name, db) {
+            let mut agent = match agent::util::get_agent(&agent_args.agent_name, db) {
                 Some(agent) => agent,
                 None => {
                     println!("Agent not found: {}", agent_args.agent_name);

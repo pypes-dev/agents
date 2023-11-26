@@ -20,15 +20,18 @@ use serde_json::{self, Value};
 #[derive(PartialEq, Deserialize, Serialize)]
 pub struct Agent {
     pub name: String,
-    pub inputs: Vec<String>,
+    pub inputs: Vec<Value>,
     pub actions: Vec<String>,
 }
 
 impl Agent {
-    pub fn add_input(&self, json_str: &String) -> Option<Value> {
-        let parsed_value = serde_json::from_str(&json_str);
+    pub fn add_input(&mut self, json_str: &String) -> Option<Value> {
+        let parsed_value = serde_json::from_str::<Value>(&json_str);
         match parsed_value {
-            Ok(val) => return val,
+            Ok(val) => {
+                self.inputs.push(val.clone());
+                Some(val)
+            }
             Err(e) => {
                 println!("{}\nUnable to parse json string {}", e, json_str);
                 None

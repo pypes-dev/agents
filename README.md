@@ -29,7 +29,7 @@ Don't just take my word for it!
 - Documentation you'll actually want to read <sub>(all in this readme)</sub>
 - And oodles more!
 
-# The Pypes Project works with the following systems:
+## The Pypes Project works with the following systems:
 - :x: = Not supported yet
 - :screwdriver: = In progress
 - :heavy_check_mark: = Supported
