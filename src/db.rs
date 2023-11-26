@@ -49,3 +49,16 @@ fn setup_db_paths() -> Result<PathBuf, Error> {
     let db_path = db_dir.join("agents.db");
     Ok(db_path)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_database_initialization() {
+        let mut db = initialize_db().unwrap();
+        db.set("key", &"value").unwrap();
+        let retrieved_value: Option<String> = db.get("key");
+        assert_eq!(retrieved_value, Some("value".to_string()));
+    }
+}
