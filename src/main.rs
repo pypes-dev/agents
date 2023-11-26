@@ -22,23 +22,43 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     #[clap(about = "Starts the agents server")]
-    Start {
-        #[arg(short, long, default_value_t = String::from("7979"))]
-        port: String,
-
-        #[arg(short, long, default_value_t = false)]
-        attatch: bool,
-    },
-    #[clap(about = "Stops the agents server\n")]
+    Start(StartArgs),
+    #[clap(about = "Stops the agents server")]
     Stop,
     #[clap(about = "Get the running status of the server\n")]
     Status,
-    #[clap(about = "Adds an agent with a name\n")]
+    #[clap(about = "Adds an agent with a name")]
     Add(AddArgs),
-    #[clap(about = "Removes an agent with a name or removes the db\n")]
+    #[clap(about = "Removes an agent with a name or removes the db")]
     Rm(RmArgs),
-    #[clap(about = "Lists agents")]
+    #[clap(about = "Lists agents\n")]
     Ls,
+    #[clap(about = "Subcommand to interact with agents")]
+    Agent(AgentCommandArgs),
+}
+
+#[derive(Parser)]
+struct AgentCommandArgs {
+    #[arg(help = "the name of the agent")]
+    agent_name: String,
+
+    #[command(subcommand)]
+    command: AgentCommands,
+}
+
+#[derive(Subcommand)]
+enum AgentCommands {
+    #[clap(about = "add an input or an action")]
+    Add,
+}
+
+#[derive(Args)]
+struct StartArgs {
+    #[arg(short, long, default_value_t = String::from("7979"))]
+    port: String,
+
+    #[arg(short, long, default_value_t = false)]
+    attatch: bool,
 }
 
 #[derive(Args)]
@@ -67,8 +87,8 @@ fn main() {
     let mut db = db::initialize_db().unwrap();
 
     match &cli.command {
-        Commands::Start { port, attatch } => {
-            server::start_server(port, attatch, db);
+        Commands::Start(start_args) => {
+            server::start_server(&start_args.port, &start_args.attatch, db);
         }
         Commands::Stop => daemon::kill_daemon(),
         Commands::Status => server::status(&mut db),
@@ -88,5 +108,6 @@ fn main() {
             }
         },
         Commands::Ls => agent::util::ls_agents(&db),
+        Commands::Agent(agent_args) => println!("CALLED AGENTS"),
     }
 }

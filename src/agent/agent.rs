@@ -14,7 +14,7 @@
 
 // if I have an action A that subscribes to creation of input B, everytime B receives a post request it should run action A
 // if I have an action A that subscribes to input B(x), everytime B receives X it should run action A
-//
+
 use serde::{Deserialize, Serialize};
 #[derive(PartialEq, Deserialize, Serialize)]
 pub struct Agent {
