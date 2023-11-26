@@ -1,14 +1,14 @@
 use crate::agent::agent;
 use crate::daemon;
+use minijinja::{context, Environment};
 use pickledb::PickleDb;
-use serde_json::to_string;
+use serde::Serialize;
 use std::{
     io::ErrorKind,
     net::TcpStream,
     sync::{Arc, Mutex},
 };
 use warp::Filter;
-
 pub fn start_server(port: &String, attatch: &bool, mut db: PickleDb) {
     db.set("port", port).unwrap();
 
@@ -17,11 +17,26 @@ pub fn start_server(port: &String, attatch: &bool, mut db: PickleDb) {
     }
 
     let db = Arc::new(Mutex::new(db));
-    initialize_server(db);
+    let port: u16 = port.parse().expect("Invalid port number");
+    initialize_server(port, db);
+}
+
+#[derive(Serialize)]
+pub struct Page {
+    title: String,
+    content: String,
+    agents: Vec<agent::Agent>,
 }
 
 #[tokio::main]
-async fn initialize_server(db: Arc<Mutex<PickleDb>>) {
+async fn initialize_server(port: u16, db: Arc<Mutex<PickleDb>>) {
+    let mut env = Environment::new();
+    env.add_template("index.html", include_str!("templates/index.html"))
+        .unwrap();
+
+    env.add_template("layout.html", include_str!("templates/layout.html"))
+        .unwrap();
+
     let routes = warp::any().map(move || {
         let db = db.lock().unwrap();
         let mut agents: Vec<agent::Agent> = Vec::new();
@@ -29,10 +44,17 @@ async fn initialize_server(db: Arc<Mutex<PickleDb>>) {
             let curr_agent = agent_iter.get_item::<agent::Agent>().unwrap();
             agents.push(curr_agent);
         }
-        let agents_json = to_string(&agents).unwrap();
-        return agents_json;
+        let template = env.get_template("index.html").unwrap();
+
+        let page = Page {
+            title: "Some title".into(),
+            content: "Some content".into(),
+            agents: agents.into(),
+        };
+        let rendered = template.render(context!(page)).unwrap();
+        warp::reply::html(rendered)
     });
-    warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
+    warp::serve(routes).run(([127, 0, 0, 1], port)).await;
 }
 
 pub fn status(db: &mut PickleDb) {
