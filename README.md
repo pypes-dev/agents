@@ -23,8 +23,21 @@ Don't just take my word for it!
 - Give your agents perception, stream anything into it as long as it's JSON.
 - Infinite numbers of agents with unlimited actions **and** history each.
 - Seriously kickASS performance 🥾🤯 because rust masterrace.
-- Seamless integration with your [existing tools and applications](https://github.com/jaredzwick/agents/wiki/Integrations).
+- Seamless integration with your [existing tools and applications](#the-pypes-project-works-with-the-following-systems).
 - A superbly scriptable API to automate your workflows in a cinch, 
 - Gorgeous <img src="documentation/readme-assets/eyecandy.svg" height="16px" alt="eye candy"/> and ear candy for your viewing and listening pleasure,
 - Documentation you'll actually want to read <sub>(all in this readme)</sub>
 - And oodles more!
+
+# The Pypes Project works with the following systems:
+- :x: = Not supported yet
+- :screwdriver: = In progress
+- :heavy_check_mark: = Supported
+ 
+| System | Status           |
+|--------|------------------|
+|Gmail   |:screwdriver:     |
+|SMS     |:x:               |
+|Images  |:x:               |
+
+Current as of the latest commit
