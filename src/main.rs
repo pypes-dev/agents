@@ -11,7 +11,7 @@ mod server;
 
 #[derive(Parser)]
 #[command(
-    name = "agents",
+    name = "pypes",
     about = "A CLI and Server to develop and interact with autonomous AI Agents\n",
     version = "0.1"
 )]
@@ -98,7 +98,6 @@ enum RmEntity {
     Agent,
     Db,
 }
-
 fn main() {
     let cli = Cli::parse();
     let mut db = db::initialize_db().unwrap();
@@ -108,9 +107,9 @@ fn main() {
             server::start_server(&start_args.port, &start_args.attatch, db);
         }
         Commands::Stop => daemon::kill_daemon(),
-        Commands::Status => server::status(&mut db),
+        Commands::Status => server::status(&mut db.config_db),
         Commands::Add(add_args) => {
-            agent::util::add_agent(&add_args.name, &mut db);
+            agent::util::add_agent(&add_args.name, &mut db.agents_db);
         }
         Commands::Rm(rm_args) => match rm_args.entity {
             RmEntity::Agent => {
@@ -118,21 +117,21 @@ fn main() {
                     .name
                     .clone()
                     .expect("Name is required for agent rm, Try agents rm bob");
-                agent::util::rm_agent(&name, &mut db);
+                agent::util::rm_agent(&name, &mut db.agents_db);
             }
             RmEntity::Db => {
-                db::remove_db(db);
+                db::remove_db(db.agents_db);
             }
         },
-        Commands::Ls => agent::util::ls_agents(&db),
-        Commands::Agent(agent_args) => handle_agent_command(agent_args, &mut db),
+        Commands::Ls => agent::util::ls_agents(&db.agents_db),
+        Commands::Agent(agent_args) => handle_agent_command(agent_args, &mut db.agents_db),
     }
 }
 
 fn handle_agent_command(agent_args: &AgentCommandArgs, db: &mut PickleDb) {
     match &agent_args.command {
         AgentCommands::Add { input } => {
-            let agent = match agent::util::get_agent(&agent_args.agent_name, db) {
+            let mut agent = match agent::util::get_agent(&agent_args.agent_name, db) {
                 Some(agent) => agent,
                 None => {
                     println!("Agent not found: {}", agent_args.agent_name);
@@ -140,7 +139,7 @@ fn handle_agent_command(agent_args: &AgentCommandArgs, db: &mut PickleDb) {
                 }
             };
             match agent.add_input(input) {
-                Some(_value) => println!("Added value from input {}", input),
+                Some(_value) => agent.write_agent_update(db),
                 None => return,
             }
         }

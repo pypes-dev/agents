@@ -6,33 +6,61 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub fn initialize_db() -> Result<PickleDb, error::Error> {
-    let db_path = setup_db_paths().unwrap();
+pub struct DbConfig {
+    pub agents_db: PickleDb,
+    pub config_db: PickleDb,
+}
 
-    if Path::new(&db_path).exists() {
-        let db = PickleDb::load(
-            db_path,
+struct DbPaths {
+    agents_db_path: PathBuf,
+    config_db_path: PathBuf,
+}
+
+pub fn initialize_db() -> Result<DbConfig, error::Error> {
+    let db_paths = setup_db_paths().unwrap();
+    let agents_db = if Path::new(&db_paths.agents_db_path).exists() {
+        PickleDb::load(
+            db_paths.agents_db_path,
             PickleDbDumpPolicy::AutoDump,
             SerializationMethod::Json,
-        )?;
-        Ok(db)
+        )?
     } else {
-        let mut db = PickleDb::new(
-            db_path,
+        let mut agents_db = PickleDb::new(
+            db_paths.agents_db_path,
             PickleDbDumpPolicy::AutoDump,
             SerializationMethod::Json,
         );
-        db.lcreate("agents").unwrap();
-        Ok(db)
-    }
+        agents_db.lcreate("agents").unwrap();
+        agents_db
+    };
+
+    let config_db = if Path::new(&db_paths.config_db_path).exists() {
+        PickleDb::load(
+            db_paths.config_db_path,
+            PickleDbDumpPolicy::AutoDump,
+            SerializationMethod::Json,
+        )?
+    } else {
+        PickleDb::new(
+            db_paths.config_db_path,
+            PickleDbDumpPolicy::AutoDump,
+            SerializationMethod::Json,
+        )
+    };
+    return Ok(DbConfig {
+        agents_db,
+        config_db,
+    });
 }
 
 pub fn remove_db(mut db: PickleDb) {
-    db.lrem_list("agents").unwrap();
-    db.lcreate("agents").unwrap();
+    let keys = db.get_all();
+    for key in keys.iter() {
+        db.rem(key).unwrap();
+    }
 }
 
-fn setup_db_paths() -> Result<PathBuf, Error> {
+fn setup_db_paths() -> Result<DbPaths, Error> {
     let base_dirs = BaseDirs::new().expect("Unable to find home directory");
     let home_dir = base_dirs.home_dir();
 
@@ -46,8 +74,13 @@ fn setup_db_paths() -> Result<PathBuf, Error> {
         create_dir_all(&db_dir)?;
     }
 
-    let db_path = db_dir.join("agents.db");
-    Ok(db_path)
+    let agents_db_path = db_dir.join("agents.db");
+    let config_db_path = db_dir.join("config.db");
+    let db_paths = DbPaths {
+        agents_db_path,
+        config_db_path,
+    };
+    Ok(db_paths)
 }
 
 #[cfg(test)]

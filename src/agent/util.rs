@@ -8,7 +8,7 @@ pub fn add_agent(name: &String, db: &mut PickleDb) {
             actions: Vec::new(),
         };
         println!("Added {}", name);
-        db.ladd("agents", &agent_instance);
+        db.set(name, &agent_instance).unwrap();
     } else {
         println!("Agent with name {} already exists!", name);
     }
@@ -19,15 +19,14 @@ pub fn rm_agent(name: &String, db: &mut PickleDb) {
         println!("Agent {} does not exist", name);
         return;
     } else {
-        if let Some(agent) = get_agent(name, db) {
-            db.lrem_value::<agent::Agent>("agents", &agent).unwrap();
-        }
+        db.rem(name).unwrap();
     }
 }
 
 pub fn get_agent(name: &String, db: &mut PickleDb) -> Option<agent::Agent> {
-    for agent_iter in db.liter("agents") {
-        let curr_agent = agent_iter.get_item::<agent::Agent>().unwrap();
+    let keys = db.get_all();
+    for key in keys.iter() {
+        let curr_agent = db.get::<agent::Agent>(key).unwrap();
         if curr_agent.name == *name {
             return Some(curr_agent);
         }
@@ -36,18 +35,13 @@ pub fn get_agent(name: &String, db: &mut PickleDb) -> Option<agent::Agent> {
 }
 
 pub fn ls_agents(db: &PickleDb) {
-    for agent_iter in db.liter("agents") {
-        let curr_agent = agent_iter.get_item::<agent::Agent>().unwrap();
+    let keys = db.get_all();
+    for key in keys.iter() {
+        let curr_agent = db.get::<agent::Agent>(key).unwrap();
         println!("Agent {}", curr_agent.name);
     }
 }
 
 pub fn agent_exists(db: &PickleDb, name: &String) -> bool {
-    for agent_iter in db.liter("agents") {
-        let curr_agent = agent_iter.get_item::<agent::Agent>().unwrap();
-        if curr_agent.name == *name {
-            return true;
-        }
-    }
-    return false;
+    return db.exists(name);
 }
