@@ -15,6 +15,7 @@
 // if I have an action A that subscribes to creation of input B, everytime B receives a post request it should run action A
 // if I have an action A that subscribes to input B(x), everytime B receives X it should run action A
 
+use pickledb::PickleDb;
 use serde::{Deserialize, Serialize};
 use serde_json::{self, Value};
 #[derive(PartialEq, Deserialize, Serialize)]
@@ -37,5 +38,9 @@ impl Agent {
                 None
             }
         }
+    }
+
+    pub fn write_agent_update(self, db: &mut PickleDb) {
+        db.set::<Agent>(&self.name, &self).unwrap();
     }
 }
