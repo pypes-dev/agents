@@ -29,6 +29,27 @@ Don't just take my word for it!
 - Documentation you'll actually want to read <sub>(all in this readme)</sub>
 - And oodles more!
 
+
+<br>
+
+<p align="center">
+    <img src="documentation/readme-assets/GetStartedBelow.png" alt="Ready to turbocharge your productivity? Then let's get started!" height="100px" />
+</p>
+
+<br>
+
+<br>
+
+### ![Quick Installation](documentation/readme-assets/QuickInstallation.png)
+
+### <a href="https://github.com/jaredzwick/agents/blob/main/install.sh"><img src="documentation/readme-assets/AllExceptWindows.png" alt="All Except Windows" height=25px /></a>
+```bash
+curl -sSL https://github.com/jaredzwick/agents/raw/main/install.sh | sh
+```
+<br>
+<br>
+
+
 ## The Pypes Project works with the following systems:
 - :x: = Not supported yet
 - :screwdriver: = In progress
