@@ -1,3 +1,4 @@
+use super::handler;
 use crate::daemon;
 use crate::{agent::agent, db::DbConfig};
 use minijinja::{context, Environment};
@@ -8,6 +9,7 @@ use std::{
     net::TcpStream,
     sync::{Arc, Mutex},
 };
+use warp::reply::{self};
 use warp::Filter;
 pub fn start_server(port: &String, attatch: &bool, mut db: DbConfig) {
     db.config_db.set("port", port).unwrap();
@@ -27,7 +29,6 @@ pub struct Page {
     content: String,
     agents: Vec<agent::Agent>,
 }
-
 #[tokio::main]
 async fn initialize_server(port: u16, db: Arc<Mutex<PickleDb>>) {
     let mut env = Environment::new();
@@ -36,9 +37,9 @@ async fn initialize_server(port: u16, db: Arc<Mutex<PickleDb>>) {
 
     env.add_template("layout.html", include_str!("templates/layout.html"))
         .unwrap();
-
-    let routes = warp::any().map(move || {
-        let db = db.lock().unwrap();
+    let db_clone = db.clone();
+    let ui = warp::path::end().map(move || {
+        let db = db_clone.lock().unwrap();
         let mut agents: Vec<agent::Agent> = Vec::new();
         for agent_iter in db.get_all() {
             let curr_agent = db.get::<agent::Agent>(&agent_iter).unwrap();
@@ -52,8 +53,13 @@ async fn initialize_server(port: u16, db: Arc<Mutex<PickleDb>>) {
             agents: agents.into(),
         };
         let rendered = template.render(context!(page)).unwrap();
-        warp::reply::html(rendered)
+        reply::html(rendered)
     });
+    let get_agent = warp::path("agent")
+        .and(warp::path::param())
+        .and(warp::any().map(move || db.clone()))
+        .and_then(handler::agents::get_agent);
+    let routes = warp::get().and(ui.or(get_agent));
     warp::serve(routes).run(([127, 0, 0, 1], port)).await;
 }
 

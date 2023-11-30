@@ -8,6 +8,7 @@ use pickledb::PickleDb;
 mod daemon;
 mod db;
 mod server;
+use server::server::{start_server, status};
 
 #[derive(Parser)]
 #[command(
@@ -101,13 +102,12 @@ enum RmEntity {
 fn main() {
     let cli = Cli::parse();
     let mut db = db::initialize_db().unwrap();
-
     match &cli.command {
         Commands::Start(start_args) => {
-            server::start_server(&start_args.port, &start_args.attatch, db);
+            start_server(&start_args.port, &start_args.attatch, db);
         }
         Commands::Stop => daemon::kill_daemon(),
-        Commands::Status => server::status(&mut db.config_db),
+        Commands::Status => status(&mut db.config_db),
         Commands::Add(add_args) => {
             agent::util::add_agent(&add_args.name, &mut db.agents_db);
         }

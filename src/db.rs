@@ -90,8 +90,8 @@ mod tests {
     #[test]
     fn test_database_initialization() {
         let mut db = initialize_db().unwrap();
-        db.set("key", &"value").unwrap();
-        let retrieved_value: Option<String> = db.get("key");
+        db.agents_db.set("key", &"value").unwrap();
+        let retrieved_value: Option<String> = db.agents_db.get("key");
         assert_eq!(retrieved_value, Some("value".to_string()));
     }
 }

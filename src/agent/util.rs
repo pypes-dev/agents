@@ -36,8 +36,8 @@ pub fn get_agent(name: &String, db: &mut PickleDb) -> Option<agent::Agent> {
 
 pub fn ls_agents(db: &PickleDb) {
     let keys = db.get_all();
-    for key in keys.iter() {
-        let curr_agent = db.get::<agent::Agent>(key).unwrap();
+    for key in keys {
+        let curr_agent = db.get::<agent::Agent>(&key).unwrap();
         println!("Agent {}", curr_agent.name);
     }
 }
