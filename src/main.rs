@@ -16,6 +16,7 @@ use server::server::{start_server, status};
     about = "A CLI and Server to develop and interact with autonomous AI Agents\n",
     version = "0.1"
 )]
+
 struct Cli {
     #[command(subcommand)]
     command: Commands,
