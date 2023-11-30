@@ -31,7 +31,6 @@ install_pypes() {
 arch=$(uname -m)
 os=$(uname -s)
 
-# Define the base URL for downloading the binaries
 base_url="https://github.com/jaredzwick/agents/releases/download/v0.0.5"
 
 case "$arch" in

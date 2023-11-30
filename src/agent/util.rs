@@ -1,5 +1,6 @@
 use crate::agent::agent;
 use pickledb::PickleDb;
+
 pub fn add_agent(name: &String, db: &mut PickleDb) {
     if !agent_exists(&db, name) {
         let agent_instance = agent::Agent {

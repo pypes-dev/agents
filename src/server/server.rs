@@ -40,6 +40,7 @@ async fn initialize_server(port: u16, db: PickleDb) {
         .and(warp::path::param())
         .and(warp::any().map(move || get_agent_db.clone()))
         .and_then(handler::agents::get_agent);
+
     let routes = warp::get().and(ui.or(get_agent));
     warp::serve(routes).run(([127, 0, 0, 1], port)).await;
 }
