@@ -25,12 +25,11 @@ pub fn initialize_db() -> Result<DbConfig, error::Error> {
             SerializationMethod::Json,
         )?
     } else {
-        let mut agents_db = PickleDb::new(
+        let agents_db = PickleDb::new(
             db_paths.agents_db_path,
             PickleDbDumpPolicy::AutoDump,
             SerializationMethod::Json,
         );
-        agents_db.lcreate("agents").unwrap();
         agents_db
     };
 
