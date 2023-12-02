@@ -31,12 +31,14 @@ pub mod ui {
     use std::convert::Infallible;
     use std::sync::{Arc, Mutex};
     use warp::reply;
+
     #[derive(Serialize)]
     pub struct Page {
         title: String,
         content: String,
         agents: Vec<Agent>,
     }
+
     pub async fn ui(db: Arc<Mutex<PickleDb>>) -> Result<reply::Html<String>, Infallible> {
         let mut env = Environment::new();
         env.add_template("index.html", include_str!("templates/index.html"))

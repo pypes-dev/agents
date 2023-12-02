@@ -1,16 +1,17 @@
 use super::handler;
 use crate::daemon;
-use crate::{agent::agent, db::DbConfig};
+use crate::db::DbConfig;
 use pickledb::PickleDb;
-use serde::Serialize;
 use std::{
     io::ErrorKind,
     net::TcpStream,
     sync::{Arc, Mutex},
 };
 use warp::Filter;
+
 pub fn start_server(port: &String, attatch: &bool, mut db: DbConfig) {
     db.config_db.set("port", port).unwrap();
+    println!("Server attempting to listen on {}", port);
 
     if !attatch {
         daemon::initialize_daemon();
@@ -20,12 +21,6 @@ pub fn start_server(port: &String, attatch: &bool, mut db: DbConfig) {
     initialize_server(port, db.agents_db);
 }
 
-#[derive(Serialize)]
-pub struct Page {
-    title: String,
-    content: String,
-    agents: Vec<agent::Agent>,
-}
 #[tokio::main]
 async fn initialize_server(port: u16, db: PickleDb) {
     let db = Arc::new(Mutex::new(db));

@@ -10,7 +10,8 @@
 // Continously choosing an action over an action space of course!
 // Each action should be a function
 
-// Actions should be subscribed to the event lifecycle of an input
+// Actions should be able to run on cron, by webhook, or
+// be subscribed to the event lifecycle of an input
 
 // if I have an action A that subscribes to creation of input B, everytime B receives a post request it should run action A
 // if I have an action A that subscribes to input B(x), everytime B receives X it should run action A

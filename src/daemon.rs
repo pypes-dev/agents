@@ -83,7 +83,7 @@ pub fn kill_daemon() {
     unsafe {
         match kill(pid, SIGTERM) != -1 {
             true => eprintln!("🦿 Agents stopped"),
-            false => eprintln!("🦿 Agents wasn't running, did you `agents start`"),
+            false => eprintln!("🦿 Agents daemon not recognized as running"),
         }
     }
 }
