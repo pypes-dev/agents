@@ -21,6 +21,20 @@ pub mod agents {
             )),
         }
     }
+
+    pub async fn list_agents(db: Arc<Mutex<PickleDb>>) -> Result<impl warp::Reply, Infallible> {
+        let db = db.lock().unwrap();
+
+        let mut agents: Vec<Agent> = Vec::new();
+        for agent_iter in db.get_all() {
+            if let Some(curr_agent) = db.get::<Agent>(&agent_iter) {
+                agents.push(curr_agent);
+            } else {
+                println!("Attempted to access invalid agent {}", agent_iter);
+            }
+        }
+        Ok(reply::with_status(reply::json(&agents), StatusCode::OK))
+    }
 }
 
 pub mod ui {
