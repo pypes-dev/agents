@@ -9,7 +9,7 @@ mod daemon;
 mod db;
 mod server;
 use server::server::{start_server, status};
-
+mod resource;
 #[derive(Parser)]
 #[command(
     name = "pypes",
@@ -79,8 +79,11 @@ struct StartArgs {
 
 #[derive(Args)]
 struct AddArgs {
+    #[arg(value_enum, help = "Specify the resouce to add")]
+    resource: AddResource,
+
     #[arg(help = "Specifies the name of the agent to be added.")]
-    name: String,
+    name: Option<String>,
 }
 
 #[derive(Args)]
@@ -100,6 +103,12 @@ enum RmEntity {
     Agent,
     Db,
 }
+
+#[derive(Clone, ValueEnum)]
+enum AddResource {
+    Agent,
+    VectorDb,
+}
 fn main() {
     let cli = Cli::parse();
     let mut db = db::initialize_db().unwrap();
@@ -109,9 +118,18 @@ fn main() {
         }
         Commands::Stop => daemon::kill_daemon(),
         Commands::Status => status(&mut db.config_db),
-        Commands::Add(add_args) => {
-            agent::util::add_agent(&add_args.name, &mut db.agents_db);
-        }
+        Commands::Add(add_args) => match add_args.resource {
+            AddResource::Agent => {
+                if let Some(name) = &add_args.name {
+                    agent::util::add_agent(&name, &mut db.agents_db);
+                } else {
+                    println!("Must specify name");
+                }
+            }
+            AddResource::VectorDb => {
+                resource::vectordb::vectordb::add_vectordb(&add_args.name).unwrap();
+            }
+        },
         Commands::Rm(rm_args) => match rm_args.entity {
             RmEntity::Agent => {
                 let name = rm_args

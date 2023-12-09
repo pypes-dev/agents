@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.75"
 clap = { version="4.4.7", features = ["derive"] }
 daemonize = "0.5.0"
 directories = "5.0.1"
@@ -16,3 +17,5 @@ serde = { version = "1.0.191", features = ["derive"] }
 serde_json = "1.0.108"
 tokio = {version = "1.33.0", features = ["full"] }
 warp = "0.3"
+docker-api = "0.14"
+futures = "0.3.1"

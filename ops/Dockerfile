@@ -65,6 +65,7 @@ RUN cargo install --target ${TARGET} --path .
 
 # Temp debug image
 FROM debian:buster-slim as release
+EXPOSE 8080
 VOLUME /root/.agents/db/
 COPY --from=installer --chown=root:root /usr/local/cargo/bin/pypes /bin/pypes
 ENTRYPOINT ["/bin/pypes", "start", "-p", "8080", "-a"]
