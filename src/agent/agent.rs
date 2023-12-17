@@ -19,7 +19,7 @@
 use pickledb::PickleDb;
 use serde::{Deserialize, Serialize};
 use serde_json::{self, Value};
-#[derive(PartialEq, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct Agent {
     pub name: String,
     pub inputs: Vec<Value>,

@@ -30,7 +30,7 @@ pub fn setup_daemon_dirs_and_files() -> Result<DaemonPaths, Error> {
 
     let stdout_path = tmp_dir.join("daemon.out");
     let stderr_path = tmp_dir.join("daemon.err");
-    let pid_file_path = tmp_dir.join("test.pid");
+    let pid_file_path = tmp_dir.join("agents.pid");
 
     Ok(DaemonPaths {
         agents_dir,

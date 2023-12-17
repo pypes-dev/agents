@@ -5,7 +5,7 @@ pub mod vectordb {
     use docker_api::Docker;
     use futures::StreamExt;
     #[tokio::main]
-    pub async fn add_vectordb(name: &Option<String>) -> Result<(), Error> {
+    pub async fn add_vectordb(_name: &Option<String>) -> Result<(), Error> {
         let docker = new_docker()?;
         pull_image_if_not_exists("qdrant/qdrant", &docker).await;
         Ok(())

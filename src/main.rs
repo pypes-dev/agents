@@ -8,7 +8,7 @@ use pickledb::PickleDb;
 mod daemon;
 mod db;
 mod server;
-use server::server::{start_server, status};
+use server::server::{initialize_server, status};
 mod resource;
 #[derive(Parser)]
 #[command(
@@ -114,7 +114,7 @@ fn main() {
     let mut db = db::initialize_db().unwrap();
     match &cli.command {
         Commands::Start(start_args) => {
-            start_server(&start_args.port, &start_args.attatch, db);
+            initialize_server(&start_args.port, &start_args.attatch, db);
         }
         Commands::Stop => daemon::kill_daemon(),
         Commands::Status => status(&mut db.config_db),

@@ -1,30 +1,21 @@
 pub mod agents {
     use crate::agent::agent::Agent;
+    use crate::server::requests;
+    use crate::server::responses;
+    use axum::{
+        extract::{Query, State},
+        response::IntoResponse,
+        Json,
+    };
     use pickledb::PickleDb;
-    use std::convert::Infallible;
-    use std::sync::{Arc, Mutex};
-    use warp::http::StatusCode;
-    use warp::reply::{self};
-
-    pub async fn get_agent(
-        agent_name: String,
-        db: Arc<Mutex<PickleDb>>,
-    ) -> Result<impl warp::Reply, Infallible> {
-        let db = db.lock().unwrap();
-
-        let agent = db.get::<Agent>(&agent_name);
-        match agent {
-            Some(agent) => Ok(reply::with_status(reply::json(&agent), StatusCode::OK)),
-            None => Ok(reply::with_status(
-                reply::json(&"Agent not found"),
-                StatusCode::BAD_REQUEST,
-            )),
-        }
-    }
-
-    pub async fn list_agents(db: Arc<Mutex<PickleDb>>) -> Result<impl warp::Reply, Infallible> {
-        let db = db.lock().unwrap();
-
+    use serde::Deserialize;
+    use std::sync::{Arc, RwLock};
+    type Db = Arc<RwLock<PickleDb>>;
+    pub async fn agents_index(
+        _pagination: Option<Query<requests::Pagination>>,
+        State(db): State<Db>,
+    ) -> impl IntoResponse {
+        let db = db.read().unwrap();
         let mut agents: Vec<Agent> = Vec::new();
         for agent_iter in db.get_all() {
             if let Some(curr_agent) = db.get::<Agent>(&agent_iter) {
@@ -33,51 +24,71 @@ pub mod agents {
                 println!("Attempted to access invalid agent {}", agent_iter);
             }
         }
-        Ok(reply::with_status(reply::json(&agents), StatusCode::OK))
+        Json(agents)
+    }
+
+    #[derive(Debug, Deserialize)]
+    pub struct CreateAgent {
+        name: String,
+        inputs: Vec<serde_json::Value>,
+        actions: Vec<String>,
+    }
+
+    pub async fn agents_create(
+        State(db): State<Db>,
+        Json(input): Json<CreateAgent>,
+    ) -> impl IntoResponse {
+        let agent = Agent {
+            name: input.name,
+            inputs: input.inputs,
+            actions: input.actions,
+        };
+        db.write().unwrap().set(&agent.name, &agent).unwrap();
+        let response = responses::CreateAgentResponse { records_created: 1 };
+        Json(response)
     }
 }
 
-pub mod ui {
+#[cfg(test)]
+mod tests {
     use crate::agent::agent::Agent;
-    use minijinja::{context, Environment};
-    use pickledb::PickleDb;
-    use serde::Serialize;
-    use std::convert::Infallible;
-    use std::sync::{Arc, Mutex};
-    use warp::reply;
 
-    #[derive(Serialize)]
-    pub struct Page {
-        title: String,
-        content: String,
-        agents: Vec<Agent>,
-    }
+    use axum::{
+        body::Body,
+        http::{Request, StatusCode},
+    };
+    use http_body_util::BodyExt; // for `collect`
+    use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
+    use serde_json::{json, Value};
+    use std::sync::{Arc, RwLock};
+    use tower::ServiceExt;
+    #[tokio::test]
+    async fn test_agents_index() {
+        let mut db = PickleDb::new(
+            "~/.agents/db/test.db",
+            PickleDbDumpPolicy::NeverDump,
+            SerializationMethod::Json,
+        );
 
-    pub async fn ui(db: Arc<Mutex<PickleDb>>) -> Result<reply::Html<String>, Infallible> {
-        let mut env = Environment::new();
-        env.add_template("index.html", include_str!("templates/index.html"))
-            .unwrap();
-
-        env.add_template("layout.html", include_str!("templates/layout.html"))
-            .unwrap();
-
-        let db = db.lock().unwrap();
-        let mut agents: Vec<Agent> = Vec::new();
-        for agent_iter in db.get_all() {
-            if let Some(curr_agent) = db.get::<Agent>(&agent_iter) {
-                agents.push(curr_agent);
-            } else {
-                println!("Attempted to access invalid agent {}", agent_iter);
-            }
-        }
-        let template = env.get_template("index.html").unwrap();
-
-        let page = Page {
-            title: "Some title".into(),
-            content: "Some content".into(),
-            agents: agents.into(),
+        let bob = &Agent {
+            name: "Bob".to_string(),
+            inputs: vec![],
+            actions: vec![],
         };
-        let rendered = template.render(context!(page)).unwrap();
-        Ok(reply::html(rendered))
+        db.set("agent_name", bob).unwrap();
+
+        let request = Request::builder()
+            .uri("/agents")
+            .body(Body::empty())
+            .unwrap();
+        let db = Arc::new(RwLock::new(db));
+
+        let app = crate::server::server::app().with_state(db);
+        let response = app.oneshot(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let body: Value = serde_json::from_slice(&body).unwrap();
+
+        assert_eq!(body, json!([{"name": "Bob", "actions": [], "inputs": []}]))
     }
 }
