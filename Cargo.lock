@@ -1086,12 +1086,14 @@ dependencies = [
  "directories",
  "docker-api",
  "futures",
+ "http-body-util",
  "libc",
  "minijinja",
  "pickledb",
  "serde",
  "serde_json",
  "tokio",
+ "tower",
 ]
 
 [[package]]

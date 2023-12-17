@@ -27,13 +27,7 @@ pub fn initialize_server(port: &String, attatch: &bool, mut db: DbConfig) {
 async fn serve(port: u16, db: PickleDb) {
     let db = Arc::new(RwLock::new(db));
 
-    let app: Router = Router::new()
-        .route(
-            "/agents",
-            get(handler::agents::agents_index).post(handler::agents::agents_create),
-        )
-        .with_state(db);
-
+    let app = app().with_state(db);
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     let listener = tokio::net::TcpListener::bind(addr).await;
 
@@ -44,6 +38,13 @@ async fn serve(port: u16, db: PickleDb) {
             axum::serve(listener, app).await.unwrap()
         }
     }
+}
+
+pub fn app() -> Router<Arc<RwLock<PickleDb>>> {
+    Router::new().route(
+        "/agents",
+        get(handler::agents::agents_index).post(handler::agents::agents_create),
+    )
 }
 
 pub fn status(db: &mut PickleDb) {
