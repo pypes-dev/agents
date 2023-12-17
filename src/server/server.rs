@@ -9,7 +9,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-pub fn start_server(port: &String, attatch: &bool, mut db: DbConfig) {
+pub fn initialize_server(port: &String, attatch: &bool, mut db: DbConfig) {
     db.config_db.set("port", port).unwrap();
 
     if !attatch {
@@ -20,20 +20,23 @@ pub fn start_server(port: &String, attatch: &bool, mut db: DbConfig) {
         .parse()
         .expect(&format!("Invalid port number {}", port));
 
-    initialize_server(port, db.agents_db);
+    serve(port, db.agents_db);
 }
 
 #[tokio::main]
-async fn initialize_server(port: u16, db: PickleDb) {
+async fn serve(port: u16, db: PickleDb) {
     let db = Arc::new(RwLock::new(db));
+
     let app: Router = Router::new()
         .route(
             "/agents",
             get(handler::agents::agents_index).post(handler::agents::agents_create),
         )
         .with_state(db);
+
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     let listener = tokio::net::TcpListener::bind(addr).await;
+
     match listener {
         Err(e) => println!("🦿{}", e),
         Ok(listener) => {
