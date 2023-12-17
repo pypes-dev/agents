@@ -11,3 +11,7 @@ subcomponents
 - macros to build types from inputs / action state
 - pattern matching on json schema types and resource docker image
 - toml config
+
+ideas
+
+- more of a nx style ui / cli so that you can pypes add @dev/lsp or something

@@ -1,8 +1,14 @@
 pub mod agents {
     use crate::agent::agent::Agent;
+    use axum::{
+        extract::{Query, State},
+        response::IntoResponse,
+        Json,
+    };
     use pickledb::PickleDb;
+    use serde::{Deserialize, Serialize};
     use std::convert::Infallible;
-    use std::sync::{Arc, Mutex};
+    use std::sync::{Arc, Mutex, RwLock};
     use warp::http::StatusCode;
     use warp::reply::{self};
 
@@ -34,6 +40,54 @@ pub mod agents {
             }
         }
         Ok(reply::with_status(reply::json(&agents), StatusCode::OK))
+    }
+
+    // The query parameters for todos index
+    #[derive(Debug, Deserialize, Default)]
+    pub struct Pagination {
+        pub offset: Option<usize>,
+        pub limit: Option<usize>,
+    }
+    type Db = Arc<RwLock<PickleDb>>;
+    pub async fn agents_index(
+        _pagination: Option<Query<Pagination>>,
+        State(db): State<Db>,
+    ) -> impl IntoResponse {
+        let db = db.read().unwrap();
+        let mut agents: Vec<Agent> = Vec::new();
+        for agent_iter in db.get_all() {
+            if let Some(curr_agent) = db.get::<Agent>(&agent_iter) {
+                agents.push(curr_agent);
+            } else {
+                println!("Attempted to access invalid agent {}", agent_iter);
+            }
+        }
+        Json(agents)
+    }
+
+    #[derive(Debug, Deserialize)]
+    pub struct CreateAgent {
+        name: String,
+        inputs: Vec<serde_json::Value>,
+        actions: Vec<String>,
+    }
+
+    #[derive(Debug, Serialize)]
+    struct CreateAgentResponse {
+        records_created: u8,
+    }
+    pub async fn agents_create(
+        State(db): State<Db>,
+        Json(input): Json<CreateAgent>,
+    ) -> impl IntoResponse {
+        let agent = Agent {
+            name: input.name,
+            inputs: input.inputs,
+            actions: input.actions,
+        };
+        db.write().unwrap().set(&agent.name, &agent).unwrap();
+        let response = CreateAgentResponse { records_created: 1 };
+        Json(response)
     }
 }
 
